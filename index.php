@@ -34,8 +34,8 @@
 	<div class="middle">
 		<div class="inputContainer">
 			<select class="valueType">
-				<option>+</option>
-				<option>-</option>
+				<option value="inc">+</option>
+				<option value="exp">-</option>
 			</select>
 			<input type="text" name="opis" placeholder="Dodaj opis" class="addDescription">
 			<input type="number" name="vrijednost" class="addValue">
