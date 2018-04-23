@@ -25,7 +25,7 @@
 				<div class="expensesTopText">Rashodi:</div>
 				<div class="right">
 					<div class="expensesTopNumber">- 4,000</div>
-					<div class="expensesTopPercentage">&nbsp;</div>
+					<div class="expensesTopPercentage">45 %</div>
 				</div>
 			</div>
 

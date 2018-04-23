@@ -54,11 +54,18 @@ var BudgetController = (function(){
 		totals: {
 			exp: 0,
 			inc: 0
-		}
+		},
+		budget: 0,
+		percentage: -1
 
 	};
-
-
+	var calculateTotals = function(type){
+			var sum = 0;
+			Data.allItems[type].forEach(function(current){
+				sum += current.value;
+			});
+			Data.totals[type] = sum;
+	};
 	return {
 		addItem: function(type, desc, val){
 			var newItem, ID;
@@ -78,6 +85,24 @@ var BudgetController = (function(){
 			Data.allItems[type].push(newItem);
 			return newItem;
 		},
+		calculateBudget: function(){
+		// 1. Izracunaj prihode i rashode
+		calculateTotals('exp');
+		calculateTotals('inc');
+		// 2. Izracunaj trenutni budet (%)
+		Data.budget = Data.totals.inc - Data.totals.exp;
+		if(Data.totals.inc > 0){
+			Data.percentage = Math.round((Data.totals.exp / Data.totals.inc) * 100);	
+		}
+		},
+		getTotals: function(){
+			return{
+				expenses: Data.totals.exp,
+				income: Data.totals.inc,
+				budget: Data.budget,
+				percentage: Data.percentage
+			}
+		},
 		testing: function(){
 			return Data;
 		}
@@ -92,7 +117,11 @@ var UIController = (function(){
 		value: '.addValue',
 		add: '.addButton',
 		incomeContainer: '.income',
-		expenseContainer: '.expenses'
+		expenseContainer: '.expenses',
+		budgetLable: '.availableBudget',
+		incomeLable: '.incomeTopNumber',
+		expenseLable: '.expensesTopNumber',
+		percentageLable: '.expensesTopPercentage'
 
 	};
 	return {
@@ -133,6 +162,18 @@ var UIController = (function(){
 			});
 		},
 
+		displayBudget: function(data){
+			document.querySelector(DOMStrings.budgetLable).textContent = data.budget;
+			document.querySelector(DOMStrings.incomeLable).textContent = data.income;
+			document.querySelector(DOMStrings.expenseLable).textContent = data.expenses;
+			
+			if(data.percentage > 0){
+				document.querySelector(DOMStrings.percentageLable).textContent = data.percentage + '%';
+			}else{
+				document.querySelector(DOMStrings.percentageLable).textContent = '-';
+			}
+		},
+
 		getDOMStrings: function(){
 			return DOMStrings;
 		}
@@ -155,9 +196,13 @@ var Controller = (function(BudgetCtrl, UICtrl){
 	};
 
 	var updateBudget = function(){
+	var budget;
 	// 1. Izracunaj Budzet
+	BudgetController.calculateBudget();
 	// 2. Dohvati stanje Budzeta
+	budget = BudgetController.getTotals();
 	// 3. Prikazi budet u UI - u
+	UIController.displayBudget(budget);
 	};
 
 	var ctrlAddItem = function(){
@@ -181,6 +226,12 @@ var Controller = (function(BudgetCtrl, UICtrl){
 	return {
 		init: function(){
 			setEventListeners();
+			UIController.displayBudget({
+				expenses: 0,
+				income: 0,
+				budget: 0,
+				percentage: -1			
+			});
 			console.log('Ovo je aplikacija');
 		}
 	}
