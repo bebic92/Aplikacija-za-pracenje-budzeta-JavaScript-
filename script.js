@@ -100,7 +100,7 @@ var UIController = (function(){
 			return{
 				type: document.querySelector(DOMStrings.type).value,
 				description : document.querySelector(DOMStrings.description).value,
-				value: document.querySelector(DOMStrings.value).value			
+				value: parseFloat(document.querySelector(DOMStrings.value).value)			
 			};
 		},
 		addListItem: function(obj, type){
@@ -120,6 +120,17 @@ var UIController = (function(){
 
 		// Unesi HTML u DOM
 		document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
+		},
+
+		clearFields: function(){
+			var fields, fieldsArray;
+			fields = document.querySelectorAll(DOMStrings.description + ', ' + DOMStrings.value);
+			// querySelectorAll vraca listu pa je trebamo pretvoriti u niz
+			fieldsArray = Array.prototype.slice.call(fields);
+			// brisemo vrijednosti koje se nalaze u poljima
+			fieldsArray.forEach(function(current, index, array){
+				current.value = ""; 
+			});
 		},
 
 		getDOMStrings: function(){
@@ -143,17 +154,29 @@ var Controller = (function(BudgetCtrl, UICtrl){
 			});
 	};
 
+	var updateBudget = function(){
+	// 1. Izracunaj Budzet
+	// 2. Dohvati stanje Budzeta
+	// 3. Prikazi budet u UI - u
+	};
+
 	var ctrlAddItem = function(){
 	var input, newItem;
 	// 1. Dohvati unesene podatke
 	input = UICtrl.getInputData();
-	// 2. Dodaj vrijednost u Budget Controller-u
-	newItem = BudgetController.addItem(input.type, input.description, input.value);
-	console.log(BudgetController.testing());
-	// 3. Dodaj vrijdnost u UI
-	UIController.addListItem(newItem, input.type);
-	// 4. Izracunaj Budzet
-	// 5. Prikazi budet u UI - u
+	// 2.Provjeri jesu li uneseni podatci u polja i ako jesu jesu li u ispravnom formatu 
+	if(input.description !== "" && !isNaN(input.value) && input.value > 0 ){
+
+		// 3. Dodaj vrijednost u Budget Controller-u
+		newItem = BudgetController.addItem(input.type, input.description, input.value);
+		console.log(BudgetController.testing());
+		// 4. Dodaj vrijdnost u UI
+		UIController.addListItem(newItem, input.type);
+		// 5. Brisi unesene vrijednost iz polja
+		UIController.clearFields();
+		// 6. Izracunaj Budzet
+		updateBudget();
+		}
 	};
 	return {
 		init: function(){
