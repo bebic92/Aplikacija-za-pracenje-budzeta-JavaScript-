@@ -85,6 +85,19 @@ var BudgetController = (function(){
 			Data.allItems[type].push(newItem);
 			return newItem;
 		},
+		deleteItem: function(type, id){
+		var ids;
+		//dohvaćanje svih id-ova u nizu 
+		ids = Data.allItems[type].map(function(current){
+			return current.id;
+		});
+		// traženje indeksa određenog elementa
+		index = ids.indexOf(id);
+		if(index !== -1){
+			Data.allItems[type].splice(index, 1);
+		}
+
+		},
 		calculateBudget: function(){
 		// 1. Izracunaj prihode i rashode
 		calculateTotals('exp');
@@ -121,7 +134,8 @@ var UIController = (function(){
 		budgetLable: '.availableBudget',
 		incomeLable: '.incomeTopNumber',
 		expenseLable: '.expensesTopNumber',
-		percentageLable: '.expensesTopPercentage'
+		percentageLable: '.expensesTopPercentage',
+		statusContainer: '.statusContainer'
 
 	};
 	return {
@@ -137,10 +151,10 @@ var UIController = (function(){
 		// Krirati HTML string s placeholderom
 		if(type === 'inc'){
 		element = DOMStrings.incomeContainer;
-		html ='<div class="item clearfix" id="income-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash"></i></button></div></div></div>';
+		html ='<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash">delete</i></button></div></div></div>';
 		}else if (type === 'exp'){
 		element = DOMStrings.expenseContainer;
-		html ='<div class="item clearfix" id="expense-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash"></i></button></div></div></div>';
+		html ='<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash"></i></button></div></div></div>';
 		}
 		// Zamjeniti placeholder s odgovarajućim vrijednostima
 		newHTML = html.replace('%id%', obj.id);
@@ -149,6 +163,11 @@ var UIController = (function(){
 
 		// Unesi HTML u DOM
 		document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
+		},
+
+		deleteListItem: function(selectorId){
+			var element = document.getElementById(selectorId);
+			element.parentNode.removeChild(element);
 		},
 
 		clearFields: function(){
@@ -193,6 +212,7 @@ var Controller = (function(BudgetCtrl, UICtrl){
 				ctrlAddItem();
 				}
 			});
+		document.querySelector(DOM.statusContainer).addEventListener('click', ctrlDeleteIem);
 	};
 
 	var updateBudget = function(){
@@ -221,6 +241,24 @@ var Controller = (function(BudgetCtrl, UICtrl){
 		UIController.clearFields();
 		// 6. Izracunaj Budzet
 		updateBudget();
+		}
+	};
+
+	var ctrlDeleteIem = function(event){
+		var itemID, splitId, type, id;
+		// dohvaćanje elementa cijelog containera ( delegiranje) elementa kojeg zelimo izbrisati
+		itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+		if(itemID){
+			splitId = itemID.split('-');
+			type = splitId[0];
+			id = parseInt(splitId[1]);
+			// 1. Brisanje elementa iz niza(baze)
+			BudgetController.deleteItem(type, id);
+			console.log(id);
+			// 2. Brisanje elementa iz korisničkog sučelja
+			UIController.deleteListItem(itemID);
+
+			// 3. Azuriranje Budzeta			
 		}
 	};
 	return {
