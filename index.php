@@ -10,7 +10,7 @@
 	<div class="top">
 		<div class="budgetContainer clearfix">
 
-			<div class="budgetTitle">Budzet za 9 mjesec 2018</div>
+			<div class="budgetTitle">Budzet za <span class="budgetYear">%godina%</span> godinu</div>
 
 			<div class="availableBudget">+ 50,000</div>
 

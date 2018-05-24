@@ -159,9 +159,26 @@ var UIController = (function(){
 		expenseLable: '.expensesTopNumber',
 		percentageLable: '.expensesTopPercentage',
 		statusContainer: '.statusContainer',
-		expensesPercentageLabel : '.item__percentage'
+		expensesPercentageLabel : '.item__percentage',
+		yearLable: '.budgetYear'
 
 	};
+
+	var formatNumber = function(num, type){
+		var numSplit, int, dec, type;
+		num = Math.abs(num);
+		num = num.toFixed(2);
+		numSplit = num.split('.');
+		int = numSplit[0];
+		dec = numSplit[1];
+		if(int.length > 3){
+			int = int.substr(0, int.length - 3) + ',' + int.substr(int.length-3, int.length);
+		}
+
+		type = type === 'exp' ? '-' : '+';
+		return type + ' ' + int + '.' + dec;
+	};
+
 	return {
 		getInputData:function(){
 			return{
@@ -183,7 +200,7 @@ var UIController = (function(){
 			// Zamjeniti placeholder s odgovarajućim vrijednostima
 			newHTML = html.replace('%id%', obj.id);
 			newHTML = newHTML.replace('%description%', obj.description);
-			newHTML = newHTML.replace('%value%', obj.value);
+			newHTML = newHTML.replace('%value%', formatNumber(obj.value, type));
 
 			// Unesi HTML u DOM
 			document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
@@ -206,9 +223,11 @@ var UIController = (function(){
 		},
 
 		displayBudget: function(data){
-			document.querySelector(DOMStrings.budgetLable).textContent = data.budget;
-			document.querySelector(DOMStrings.incomeLable).textContent = data.income;
-			document.querySelector(DOMStrings.expenseLable).textContent = data.expenses;
+			var type;
+			type = data.budget > 0 ? 'inc': 'exp';
+			document.querySelector(DOMStrings.budgetLable).textContent = formatNumber(data.budget, type);
+			document.querySelector(DOMStrings.incomeLable).textContent = formatNumber(data.income, 'inc');
+			document.querySelector(DOMStrings.expenseLable).textContent = formatNumber(data.expenses, 'exp');
 			
 			if(data.percentage > 0){
 				document.querySelector(DOMStrings.percentageLable).textContent = data.percentage + '%';
@@ -233,6 +252,13 @@ var UIController = (function(){
 					current.textContent = '----';
 				}
 			});
+		},
+
+		displayDates: function(){
+			var now, year;
+			now = new Date();
+			year = now.getFullYear();
+			document.querySelector(DOMStrings.yearLable).textContent = year; 
 		},
 
 		getDOMStrings: function(){
@@ -325,6 +351,7 @@ var Controller = (function(BudgetCtrl, UICtrl){
 				budget: 0,
 				percentage: -1			
 			});
+			UIController.displayDates();
 			console.log('Ovo je aplikacija');
 		}
 	}
