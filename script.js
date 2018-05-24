@@ -44,6 +44,15 @@ var BudgetController = (function(){
 		this.id = id;
 		this.description = description;
 		this.value = value;
+		this.percentage = -1;
+	};
+	Expense.prototype.calculatePercentage = function(totals){
+		if(totals > 0){
+			this.percentage = Math.round((this.value / totals) * 100);
+		}
+	};
+	Expense.prototype.getPercentage = function(){
+		return this.percentage;
 	};
 
 	var Data = {
@@ -108,6 +117,20 @@ var BudgetController = (function(){
 			Data.percentage = Math.round((Data.totals.exp / Data.totals.inc) * 100);	
 		}
 		},
+
+		calculatePercentages: function(){
+			Data.allItems.exp.forEach(function(current){
+				current.calculatePercentage(Data.totals.inc)
+			});
+		},
+
+		getPercentages: function(){
+			var percentages = Data.allItems.exp.map(function(current){
+				return current.getPercentage();
+			});
+			return percentages;
+		},
+
 		getTotals: function(){
 			return{
 				expenses: Data.totals.exp,
@@ -135,7 +158,8 @@ var UIController = (function(){
 		incomeLable: '.incomeTopNumber',
 		expenseLable: '.expensesTopNumber',
 		percentageLable: '.expensesTopPercentage',
-		statusContainer: '.statusContainer'
+		statusContainer: '.statusContainer',
+		expensesPercentageLabel : '.item__percentage'
 
 	};
 	return {
@@ -147,22 +171,22 @@ var UIController = (function(){
 			};
 		},
 		addListItem: function(obj, type){
-		var html, newHTML, element;
-		// Krirati HTML string s placeholderom
-		if(type === 'inc'){
-		element = DOMStrings.incomeContainer;
-		html ='<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash">delete</i></button></div></div></div>';
-		}else if (type === 'exp'){
-		element = DOMStrings.expenseContainer;
-		html ='<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash"></i></button></div></div></div>';
-		}
-		// Zamjeniti placeholder s odgovarajućim vrijednostima
-		newHTML = html.replace('%id%', obj.id);
-		newHTML = newHTML.replace('%description%', obj.description);
-		newHTML = newHTML.replace('%value%', obj.value);
+			var html, newHTML, element;
+			// Krirati HTML string s placeholderom
+			if(type === 'inc'){
+			element = DOMStrings.incomeContainer;
+			html ='<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash">delete</i></button></div></div></div>';
+			}else if (type === 'exp'){
+			element = DOMStrings.expenseContainer;
+			html ='<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="fa fa-trash"></i></button></div></div></div>';
+			}
+			// Zamjeniti placeholder s odgovarajućim vrijednostima
+			newHTML = html.replace('%id%', obj.id);
+			newHTML = newHTML.replace('%description%', obj.description);
+			newHTML = newHTML.replace('%value%', obj.value);
 
-		// Unesi HTML u DOM
-		document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
+			// Unesi HTML u DOM
+			document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
 		},
 
 		deleteListItem: function(selectorId){
@@ -192,6 +216,24 @@ var UIController = (function(){
 				document.querySelector(DOMStrings.percentageLable).textContent = '-';
 			}
 		},
+		displayPercentages: function(percentages){
+			// vraca listu
+			var fields = document.querySelectorAll(DOMStrings.expensesPercentageLabel);
+
+			var nodeListForeach = function(fields, callback){
+				for(var i = 0; i < fields.length; i++){
+					callback(fields[i], i);
+				}
+			};
+
+			nodeListForeach(fields, function(current, index){
+				if(percentages[index] > 0){	
+					current.textContent = percentages[index] + '%';
+				}else{
+					current.textContent = '----';
+				}
+			});
+		},
 
 		getDOMStrings: function(){
 			return DOMStrings;
@@ -216,31 +258,42 @@ var Controller = (function(BudgetCtrl, UICtrl){
 	};
 
 	var updateBudget = function(){
-	var budget;
-	// 1. Izracunaj Budzet
-	BudgetController.calculateBudget();
-	// 2. Dohvati stanje Budzeta
-	budget = BudgetController.getTotals();
-	// 3. Prikazi budet u UI - u
-	UIController.displayBudget(budget);
+		var budget;
+		// 1. Izracunaj Budzet
+		BudgetController.calculateBudget();
+		// 2. Dohvati stanje Budzeta
+		budget = BudgetController.getTotals();
+		// 3. Prikazi budet u UI - u
+		UIController.displayBudget(budget);
 	};
+	var updatePercentages = function(){
+
+		// 1. Izracunaj postotke
+		BudgetController.calculatePercentages();
+		// 2. Dohvati novo izracunate postotke
+		var percentages = BudgetController.getPercentages();
+		// 3. Prikazi nove postotke u sucelju
+		UIController.displayPercentages(percentages);
+	}
 
 	var ctrlAddItem = function(){
-	var input, newItem;
-	// 1. Dohvati unesene podatke
-	input = UICtrl.getInputData();
-	// 2.Provjeri jesu li uneseni podatci u polja i ako jesu jesu li u ispravnom formatu 
-	if(input.description !== "" && !isNaN(input.value) && input.value > 0 ){
+		var input, newItem;
+		// 1. Dohvati unesene podatke
+		input = UICtrl.getInputData();
+		// 2.Provjeri jesu li uneseni podatci u polja i ako jesu jesu li u ispravnom formatu 
+		if(input.description !== "" && !isNaN(input.value) && input.value > 0 ){
 
-		// 3. Dodaj vrijednost u Budget Controller-u
-		newItem = BudgetController.addItem(input.type, input.description, input.value);
-		console.log(BudgetController.testing());
-		// 4. Dodaj vrijdnost u UI
-		UIController.addListItem(newItem, input.type);
-		// 5. Brisi unesene vrijednost iz polja
-		UIController.clearFields();
-		// 6. Izracunaj Budzet
-		updateBudget();
+			// 3. Dodaj vrijednost u Budget Controller-u
+			newItem = BudgetController.addItem(input.type, input.description, input.value);
+			console.log(BudgetController.testing());
+			// 4. Dodaj vrijdnost u UI
+			UIController.addListItem(newItem, input.type);
+			// 5. Brisi unesene vrijednost iz polja
+			UIController.clearFields();
+			// 6. Izracunaj Budzet
+			updateBudget();
+			// 7. Azuriranje postotaka
+			updatePercentages();
 		}
 	};
 
@@ -257,8 +310,10 @@ var Controller = (function(BudgetCtrl, UICtrl){
 			console.log(id);
 			// 2. Brisanje elementa iz korisničkog sučelja
 			UIController.deleteListItem(itemID);
-
 			// 3. Azuriranje Budzeta			
+			updateBudget();
+			// 4. Azuriranje postotaka
+			updatePercentages(); 
 		}
 	};
 	return {
